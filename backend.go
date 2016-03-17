@@ -134,21 +134,25 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 
 			var body Body
 			if err := json.Unmarshal([]byte(bodyJson), &body); err != nil {
+				l.Close()
 				log.Fatalf("Error parsing JSON %s: %s", bodyJson, err)
 			}
 
 			response, err := handleBody(body, model)
 			if err != nil {
+				l.Close()
 				log.Fatalf("Error from handleBody: %s", err)
 			}
 
 			responseJson, err := json.Marshal(response)
 			if err != nil {
+				l.Close()
 				log.Fatalf("Error marshaling JSON %s: %s", response, err)
 			}
 
 			_, err = fd.Write(responseJson)
 			if err != nil {
+				l.Close()
 				log.Fatal("Error from Write: ", err)
 			}
 		} // scan next line
