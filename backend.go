@@ -132,13 +132,6 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 			}
 			log.Println("Server got:", body)
 
-			if body.ResetModel {
-				model = &models.MemoryModel{
-					NextDeviceId: 1,
-					Devices:      []models.Device{},
-				}
-			}
-
 			response, err := handleBody(body, model)
 			if err != nil {
 				log.Fatalf("Error from handleBody: %s", err)

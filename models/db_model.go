@@ -14,6 +14,32 @@ func NewDbModel(db *sql.DB) *DbModel {
 	return &DbModel{db: db}
 }
 
+func (model *DbModel) Reset() error {
+	err := model.deleteFrom("devices")
+	if err != nil {
+		return fmt.Errorf("Error from deleteFrom(devices): %s", err)
+	}
+
+	err = model.restartSequence("devices_id_seq")
+	if err != nil {
+		return fmt.Errorf("Error from restartSequence(devices_id_seq): %s", err)
+	}
+
+	return nil
+}
+
+func (model *DbModel) deleteFrom(tableName string) error {
+	sql := fmt.Sprintf("DELETE FROM \"%s\"", tableName)
+	_, err := model.db.Exec(sql)
+	return err
+}
+
+func (model *DbModel) restartSequence(sequenceName string) error {
+	sql := fmt.Sprintf("ALTER SEQUENCE \"%s\" RESTART WITH 1;", sequenceName)
+	_, err := model.db.Exec(sql)
+	return err
+}
+
 func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 	var device Device
 	findSql := `SELECT id, uid

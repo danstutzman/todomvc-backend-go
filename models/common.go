@@ -6,5 +6,6 @@ type Device struct {
 }
 
 type Model interface {
+	Reset() error
 	FindOrCreateDeviceByUid(uid string) (*Device, error)
 }

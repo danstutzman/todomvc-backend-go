@@ -42,6 +42,14 @@ func handleRequest(writer http.ResponseWriter, request *http.Request,
 }
 
 func handleBody(body Body, model models.Model) (*Response, error) {
+	log.Printf("Got body %v", body)
+
+	if body.ResetModel {
+		if err := model.Reset(); err != nil {
+			return nil, fmt.Errorf("Error from model.Reset: %s", err)
+		}
+	}
+
 	if body.DeviceUid == "" {
 		return nil, fmt.Errorf("Blank DeviceUid")
 	}

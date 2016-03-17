@@ -5,6 +5,12 @@ type MemoryModel struct {
 	NextDeviceId int
 }
 
+func (model *MemoryModel) Reset() error {
+	model.Devices = []Device{}
+	model.NextDeviceId = 1
+	return nil
+}
+
 func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 	for _, device := range model.Devices {
 		if device.Uid == uid {
