@@ -6,10 +6,30 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type Response struct {
-	DeviceId int `json:"deviceId"`
+	DeviceId               int
+	ActionToSyncIdToOutput map[int]int
+}
+
+func (response *Response) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		DeviceId               int            `json:"deviceId"`
+		ActionToSyncIdToOutput map[string]int `json:"actionToSyncIdToOutput"`
+	}{
+		DeviceId:               response.DeviceId,
+		ActionToSyncIdToOutput: mapIntIntToMapStringInt(response.ActionToSyncIdToOutput),
+	})
+}
+
+func mapIntIntToMapStringInt(input map[int]int) map[string]int {
+	output := map[string]int{}
+	for k, v := range input {
+		output[strconv.Itoa(k)] = v
+	}
+	return output
 }
 
 func handleRequest(writer http.ResponseWriter, request *http.Request,
@@ -60,8 +80,8 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 	log.Println("   Got device", device)
 
 	response := Response{
-		DeviceId: device.Id,
+		DeviceId:               device.Id,
+		ActionToSyncIdToOutput: map[int]int{},
 	}
-
 	return &response, nil
 }
