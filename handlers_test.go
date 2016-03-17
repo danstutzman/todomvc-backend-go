@@ -12,7 +12,7 @@ func TestHandleBodyNoDeviceUid(t *testing.T) {
 		NextDeviceId: 1,
 		Devices:      []models.Device{},
 	}
-	err := handleBody(Body{}, model)
+	_, err := handleBody(Body{}, model)
 	assert.Equal(t, fmt.Errorf("Blank DeviceUid"), err)
 }
 
@@ -23,7 +23,7 @@ func TestHandleBodyNewDevice(t *testing.T) {
 			{Id: 1, Uid: "earlier"},
 		},
 	}
-	err := handleBody(Body{DeviceUid: "new"}, model)
+	_, err := handleBody(Body{DeviceUid: "new"}, model)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, []models.Device{
 		{Id: 1, Uid: "earlier"},
@@ -38,7 +38,7 @@ func TestHandleBodyExistingDevice(t *testing.T) {
 			{Id: 1, Uid: "here"},
 		},
 	}
-	err := handleBody(Body{DeviceUid: "here"}, model)
+	_, err := handleBody(Body{DeviceUid: "here"}, model)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, []models.Device{{Id: 1, Uid: "here"}}, model.Devices)
 }
