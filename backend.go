@@ -17,9 +17,13 @@ import (
 
 type Body struct {
 	// ResetModel is for testing purposes
-	ResetModel             bool        `json:"resetModel"`
-	DeviceUid              string      `json:"deviceUid"`
-	ActionToSyncIdToOutput map[int]int `json:"actionToSyncIdToOutput"`
+	ResetModel    bool           `json:"resetModel"`
+	DeviceUid     string         `json:"deviceUid"`
+	ActionsToSync []ActionToSync `json:"actionsToSync"`
+}
+
+type ActionToSync struct {
+	Id int `json:"id"`
 }
 
 type CommandLineArgs struct {
