@@ -33,13 +33,19 @@ func (model *DbModel) Reset() error {
 func (model *DbModel) deleteFrom(tableName string) error {
 	sql := fmt.Sprintf("DELETE FROM \"%s\"", tableName)
 	_, err := model.db.Exec(sql)
-	return err
+	if err != nil {
+		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+	}
+	return nil
 }
 
 func (model *DbModel) restartSequence(sequenceName string) error {
 	sql := fmt.Sprintf("ALTER SEQUENCE \"%s\" RESTART WITH 1;", sequenceName)
 	_, err := model.db.Exec(sql)
-	return err
+	if err != nil {
+		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+	}
+	return nil
 }
 
 func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
@@ -98,6 +104,6 @@ func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
 	} else if err == SqlErrNoRows {
 		return nil, nil
 	} else {
-		return nil, fmt.Errorf("Error from QueryRow with sql=%s: %s", sql)
+		return nil, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql)
 	}
 }
