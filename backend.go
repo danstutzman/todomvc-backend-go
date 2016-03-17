@@ -23,6 +23,7 @@ type Body struct {
 type CommandLineArgs struct {
 	postgresCredentialsPath string
 	socketPath              string
+	inMemoryDb              bool
 }
 
 func mustParseFlags() CommandLineArgs {
@@ -31,10 +32,9 @@ func mustParseFlags() CommandLineArgs {
 		"JSON file with username and password")
 	flag.StringVar(&args.socketPath, "socket_path", "",
 		"Path for UNIX socket server for testing")
+	flag.BoolVar(&args.inMemoryDb, "in_memory_db", false,
+		"Store data in memory instead of PostgreSQL for faster testing")
 	flag.Parse()
-	if args.postgresCredentialsPath == "" {
-		log.Fatal("Missing -postgres_credentials_path")
-	}
 	return args
 }
 
@@ -161,13 +161,21 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 func main() {
 	args := mustParseFlags()
 
-	if args.socketPath != "" {
-		mustRunSocketServer(args.socketPath, &models.MemoryModel{
+	var model models.Model
+	if args.postgresCredentialsPath != "" {
+		model = models.NewDbModel(mustOpenPostgres(args.postgresCredentialsPath))
+	} else if args.inMemoryDb {
+		model = &models.MemoryModel{
 			NextDeviceId: 1,
 			Devices:      []models.Device{},
-		})
+		}
 	} else {
-		db := mustOpenPostgres(args.postgresCredentialsPath)
-		mustRunWebServer(models.NewDbModel(db))
+		log.Fatal("Supply either -postgres_credentials_path or -in_memory_db")
+	}
+
+	if args.socketPath != "" {
+		mustRunSocketServer(args.socketPath, model)
+	} else {
+		mustRunWebServer(model)
 	}
 }
