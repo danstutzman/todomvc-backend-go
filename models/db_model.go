@@ -57,16 +57,7 @@ func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 	if device != nil {
 		return device, nil
 	} else {
-		insertSql := `INSERT INTO devices(
-				uid,
-				action_to_sync_id_to_output_json,
-				completed_action_to_sync_id
-			) VALUES(
-				$1,
-				'{}',
-				0
-			) RETURNING uid;`
-		_, insertErr := model.db.Exec(insertSql, uid)
+		insertErr := model.createDevice(uid)
 		if insertErr == nil {
 			device, find2Err := model.findDeviceByUid(uid)
 			if find2Err == nil {
@@ -84,12 +75,27 @@ func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 					return nil, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
 				}
 			} else {
-				return nil, fmt.Errorf(
-					"Error from db.Exec with insertSql=%s uid=%s insertErr=%s",
-					insertSql, uid, insertErr)
+				return nil, fmt.Errorf("Error from createDevice: %s", uid, insertErr)
 			}
 		}
 	}
+}
+
+func (model *DbModel) createDevice(uid string) error {
+	sql := `INSERT INTO devices(
+			uid,
+			action_to_sync_id_to_output_json,
+			completed_action_to_sync_id
+		) VALUES(
+			$1,
+			'{}',
+			0
+		);`
+	_, err := model.db.Exec(sql, uid)
+	if err != nil {
+		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+	}
+	return err
 }
 
 func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
