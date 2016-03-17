@@ -148,7 +148,7 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 				log.Fatal("Write: ", err)
 			}
 		} // scan next line
-	} // endless loop of reading more data
+	} // endless loop of accepting more connections
 
 } // end mustRunSocketServer
 
