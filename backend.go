@@ -149,7 +149,7 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 
 			_, err = fd.Write(responseJson)
 			if err != nil {
-				log.Fatal("Write: ", err)
+				log.Fatal("Error from Write: ", err)
 			}
 		} // scan next line
 	} // endless loop of accepting more connections
