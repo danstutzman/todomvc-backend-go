@@ -1,8 +1,9 @@
 package models
 
 type Device struct {
-	Id  int    `json:"id"`
-	Uid string `json:"uid"`
+	Id                     int
+	Uid                    string
+	ActionToSyncIdToOutput map[int]int
 }
 
 type Model interface {

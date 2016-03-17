@@ -79,9 +79,13 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 	}
 	log.Println("   Got device", device)
 
+	for _, actionToSync := range body.ActionsToSync {
+		device.ActionToSyncIdToOutput[actionToSync.Id] = 0
+	}
+
 	response := Response{
 		DeviceId:               device.Id,
-		ActionToSyncIdToOutput: map[int]int{},
+		ActionToSyncIdToOutput: device.ActionToSyncIdToOutput,
 	}
 	return &response, nil
 }

@@ -21,6 +21,7 @@ func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 	newDevice := Device{
 		Id:  model.NextDeviceId,
 		Uid: uid,
+		ActionToSyncIdToOutput: map[int]int{},
 	}
 	model.Devices = append(model.Devices, newDevice)
 	model.NextDeviceId += 1

@@ -92,6 +92,7 @@ func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
 		FROM devices
 		WHERE uid = $1`
 	err := model.db.QueryRow(sql, uid).Scan(&device.Id, &device.Uid)
+	device.ActionToSyncIdToOutput = map[int]int{}
 	if err == nil {
 		return &device, nil
 	} else if err == SqlErrNoRows {
