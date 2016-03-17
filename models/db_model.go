@@ -113,3 +113,22 @@ func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
 		return nil, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql)
 	}
 }
+
+func (model *DbModel) CreateTodo(action ActionToSync) (*Todo, error) {
+	newTodo := Todo{
+		Title:     action.Title,
+		Completed: action.Completed,
+	}
+	sql := `INSERT INTO todo_items(
+  		title,
+			completed
+		) VALUES(
+			$1,
+			$2
+		) RETURNING id;`
+	err := model.db.QueryRow(sql, newTodo.Title, newTodo.Completed).Scan(&newTodo.Id)
+	if err != nil {
+		return nil, fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+	}
+	return &newTodo, nil
+}

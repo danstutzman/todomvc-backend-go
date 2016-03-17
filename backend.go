@@ -17,13 +17,9 @@ import (
 
 type Body struct {
 	// ResetModel is for testing purposes
-	ResetModel    bool           `json:"resetModel"`
-	DeviceUid     string         `json:"deviceUid"`
-	ActionsToSync []ActionToSync `json:"actionsToSync"`
-}
-
-type ActionToSync struct {
-	Id int `json:"id"`
+	ResetModel    bool                  `json:"resetModel"`
+	DeviceUid     string                `json:"deviceUid"`
+	ActionsToSync []models.ActionToSync `json:"actionsToSync"`
 }
 
 type CommandLineArgs struct {

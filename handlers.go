@@ -80,7 +80,16 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 	log.Println("   Got device", device)
 
 	for _, actionToSync := range body.ActionsToSync {
-		device.ActionToSyncIdToOutput[actionToSync.Id] = 0
+		switch actionToSync.Type {
+		case "TODOS/ADD_TODO":
+			todo, err := model.CreateTodo(actionToSync)
+			if err != nil {
+				return nil, fmt.Errorf("Error from CreateTodo: %s", err)
+			}
+			device.ActionToSyncIdToOutput[actionToSync.Id] = todo.Id
+		default:
+			return nil, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
+		}
 	}
 
 	response := Response{

@@ -20,14 +20,14 @@ func TestHandleBodyNewDevice(t *testing.T) {
 	model := &models.MemoryModel{
 		NextDeviceId: 2,
 		Devices: []models.Device{
-			{Id: 1, Uid: "earlier"},
+			{Id: 1, Uid: "earlier", ActionToSyncIdToOutput: map[int]int{}},
 		},
 	}
 	_, err := handleBody(Body{DeviceUid: "new"}, model)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, []models.Device{
-		{Id: 1, Uid: "earlier"},
-		{Id: 2, Uid: "new"},
+		{Id: 1, Uid: "earlier", ActionToSyncIdToOutput: map[int]int{}},
+		{Id: 2, Uid: "new", ActionToSyncIdToOutput: map[int]int{}},
 	}, model.Devices)
 }
 
@@ -35,10 +35,12 @@ func TestHandleBodyExistingDevice(t *testing.T) {
 	model := &models.MemoryModel{
 		NextDeviceId: 2,
 		Devices: []models.Device{
-			{Id: 1, Uid: "here"},
+			{Id: 1, Uid: "here", ActionToSyncIdToOutput: map[int]int{}},
 		},
 	}
 	_, err := handleBody(Body{DeviceUid: "here"}, model)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, []models.Device{{Id: 1, Uid: "here"}}, model.Devices)
+	assert.Equal(t, []models.Device{
+		{Id: 1, Uid: "here", ActionToSyncIdToOutput: map[int]int{}},
+	}, model.Devices)
 }
