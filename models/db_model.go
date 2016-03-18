@@ -2,7 +2,9 @@ package models
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -17,7 +19,9 @@ func NewDbModel(db *sql.DB) *DbModel {
 }
 
 func (model *DbModel) Reset() error {
-	err := model.deleteFrom("devices")
+	var err error
+
+	err = model.deleteFrom("devices")
 	if err != nil {
 		return fmt.Errorf("Error from deleteFrom(devices): %s", err)
 	}
@@ -25,6 +29,16 @@ func (model *DbModel) Reset() error {
 	err = model.restartSequence("devices_id_seq")
 	if err != nil {
 		return fmt.Errorf("Error from restartSequence(devices_id_seq): %s", err)
+	}
+
+	err = model.deleteFrom("todo_items")
+	if err != nil {
+		return fmt.Errorf("Error from deleteFrom(todo_items): %s", err)
+	}
+
+	err = model.restartSequence("todo_items_id_seq")
+	if err != nil {
+		return fmt.Errorf("Error from restartSequence(todo_items_id_seq): %s", err)
 	}
 
 	return nil
