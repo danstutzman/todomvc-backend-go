@@ -151,6 +151,12 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 				l.Close()
 				log.Fatal("Error from Write: ", err)
 			}
+
+			_, err = fd.Write([]byte("\n"))
+			if err != nil {
+				l.Close()
+				log.Fatal("Error from Write: ", err)
+			}
 		} // scan next line
 	} // endless loop of accepting more connections
 
