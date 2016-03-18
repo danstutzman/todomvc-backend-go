@@ -100,12 +100,26 @@ func (model *DbModel) createDevice(uid string) error {
 
 func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
 	var device Device
-	sql := `SELECT id, uid
+	var actionToSyncIdToOutputJson string
+	sql := `SELECT id, uid, action_to_sync_id_to_output_json
 		FROM devices
 		WHERE uid = $1`
-	err := model.db.QueryRow(sql, uid).Scan(&device.Id, &device.Uid)
-	device.ActionToSyncIdToOutput = map[int]int{}
+	err := model.db.QueryRow(sql, uid).Scan(&device.Id, &device.Uid,
+		&actionToSyncIdToOutputJson)
 	if err == nil {
+		var actionToSyncIdToOutput map[string]int
+		if err := json.Unmarshal([]byte(actionToSyncIdToOutputJson),
+			&actionToSyncIdToOutput); err != nil {
+			return nil, fmt.Errorf("Error from unmarshaling JSON '%s': %s",
+				actionToSyncIdToOutputJson, err)
+		}
+
+		device.ActionToSyncIdToOutput, err =
+			mapStringIntToMapIntInt(actionToSyncIdToOutput)
+		if err != nil {
+			return nil, fmt.Errorf("Error from mapStringIntToMapIntInt: %s", err)
+		}
+
 		return &device, nil
 	} else if err == SqlErrNoRows {
 		return nil, nil
@@ -131,4 +145,43 @@ func (model *DbModel) CreateTodo(action ActionToSync) (*Todo, error) {
 		return nil, fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
 	}
 	return &newTodo, nil
+}
+
+func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device *Device) error {
+	actionToSyncIdToOutputJson, err :=
+		json.Marshal(mapIntIntToMapStringInt(device.ActionToSyncIdToOutput))
+	if err != nil {
+		return fmt.Errorf(fmt.Sprintf("Error marshaling JSON: %s", err))
+	}
+
+	sql := `UPDATE devices SET
+		  action_to_sync_id_to_output_json = $1
+			WHERE id = $2;`
+	_, err = model.db.Exec(sql, string(actionToSyncIdToOutputJson), device.Id)
+	if err != nil {
+		return fmt.Errorf(`Error from db.Exec with sql=%s,
+			  action_to_sync_id_to_output_json=%s, id=%s: %s`,
+			sql, string(actionToSyncIdToOutputJson), device.Id, err)
+	}
+	return nil
+}
+
+func mapIntIntToMapStringInt(input map[int]int) map[string]int {
+	output := map[string]int{}
+	for k, v := range input {
+		output[strconv.Itoa(k)] = v
+	}
+	return output
+}
+
+func mapStringIntToMapIntInt(input map[string]int) (map[int]int, error) {
+	output := map[int]int{}
+	for kString, v := range input {
+		kInt, err := strconv.Atoi(kString)
+		if err != nil {
+			return nil, fmt.Errorf("Error from strconv.Atoi for '%s': %s", kString, err)
+		}
+		output[kInt] = v
+	}
+	return output, nil
 }

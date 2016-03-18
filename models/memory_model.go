@@ -42,3 +42,9 @@ func (model *MemoryModel) CreateTodo(action ActionToSync) (*Todo, error) {
 	model.NextTodoId += 1
 	return &newTodo, nil
 }
+
+func (model *MemoryModel) UpdateDeviceActionToSyncIdToOutputJson(
+	device *Device) error {
+	// noop
+	return nil
+}
