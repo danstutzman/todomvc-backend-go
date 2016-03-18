@@ -89,7 +89,9 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 				if err != nil {
 					return nil, fmt.Errorf("Error from CreateTodo: %s", err)
 				}
-				device.ActionToSyncIdToOutput[actionToSync.Id] = todo.Id
+				// immutable edit so we don't corrupt MemoryModel
+				device.ActionToSyncIdToOutput = immutableSetForMapIntInt(
+					device.ActionToSyncIdToOutput, actionToSync.Id, todo.Id)
 			default:
 				return nil, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
 			}
@@ -102,4 +104,15 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 		ActionToSyncIdToOutput: device.ActionToSyncIdToOutput,
 	}
 	return &response, nil
+}
+
+// Set input[keyToSet] = valueToSet in a copy of input (doesn't modify input)
+func immutableSetForMapIntInt(input map[int]int, keyToSet int,
+	valueToSet int) map[int]int {
+	output := map[int]int{}
+	for k, v := range input {
+		output[k] = v
+	}
+	output[keyToSet] = valueToSet
+	return output
 }

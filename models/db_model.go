@@ -62,13 +62,13 @@ func (model *DbModel) restartSequence(sequenceName string) error {
 	return nil
 }
 
-func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
+func (model *DbModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
 	device, find1Err := model.findDeviceByUid(uid)
 	if find1Err != nil {
-		return nil, fmt.Errorf("Error from findDeviceByUid: %s", find1Err)
+		return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find1Err)
 	}
 
-	if device != nil {
+	if device.Id != 0 {
 		return device, nil
 	} else {
 		insertErr := model.createDevice(uid)
@@ -77,7 +77,7 @@ func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 			if find2Err == nil {
 				return device, nil
 			} else {
-				return nil, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
+				return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
 			}
 		} else {
 			if strings.HasPrefix(insertErr.Error(),
@@ -86,10 +86,10 @@ func (model *DbModel) FindOrCreateDeviceByUid(uid string) (*Device, error) {
 				if find2Err == nil {
 					return device, nil
 				} else {
-					return nil, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
+					return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
 				}
 			} else {
-				return nil, fmt.Errorf("Error from createDevice: %s", uid, insertErr)
+				return Device{}, fmt.Errorf("Error from createDevice: %s", uid, insertErr)
 			}
 		}
 	}
@@ -112,7 +112,7 @@ func (model *DbModel) createDevice(uid string) error {
 	return err
 }
 
-func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
+func (model *DbModel) findDeviceByUid(uid string) (Device, error) {
 	var device Device
 	var actionToSyncIdToOutputJson string
 	sql := `SELECT id, uid, action_to_sync_id_to_output_json
@@ -124,25 +124,25 @@ func (model *DbModel) findDeviceByUid(uid string) (*Device, error) {
 		var actionToSyncIdToOutput map[string]int
 		if err := json.Unmarshal([]byte(actionToSyncIdToOutputJson),
 			&actionToSyncIdToOutput); err != nil {
-			return nil, fmt.Errorf("Error from unmarshaling JSON '%s': %s",
+			return Device{}, fmt.Errorf("Error from unmarshaling JSON '%s': %s",
 				actionToSyncIdToOutputJson, err)
 		}
 
 		device.ActionToSyncIdToOutput, err =
 			mapStringIntToMapIntInt(actionToSyncIdToOutput)
 		if err != nil {
-			return nil, fmt.Errorf("Error from mapStringIntToMapIntInt: %s", err)
+			return Device{}, fmt.Errorf("Error from mapStringIntToMapIntInt: %s", err)
 		}
 
-		return &device, nil
+		return device, nil
 	} else if err == SqlErrNoRows {
-		return nil, nil
+		return Device{}, nil
 	} else {
-		return nil, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql)
+		return Device{}, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql)
 	}
 }
 
-func (model *DbModel) CreateTodo(action ActionToSync) (*Todo, error) {
+func (model *DbModel) CreateTodo(action ActionToSync) (Todo, error) {
 	newTodo := Todo{
 		Title:     action.Title,
 		Completed: action.Completed,
@@ -156,12 +156,12 @@ func (model *DbModel) CreateTodo(action ActionToSync) (*Todo, error) {
 		) RETURNING id;`
 	err := model.db.QueryRow(sql, newTodo.Title, newTodo.Completed).Scan(&newTodo.Id)
 	if err != nil {
-		return nil, fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+		return Todo{}, fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
 	}
-	return &newTodo, nil
+	return newTodo, nil
 }
 
-func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device *Device) error {
+func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) error {
 	actionToSyncIdToOutputJson, err :=
 		json.Marshal(mapIntIntToMapStringInt(device.ActionToSyncIdToOutput))
 	if err != nil {

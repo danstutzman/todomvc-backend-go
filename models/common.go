@@ -21,7 +21,7 @@ type ActionToSync struct {
 
 type Model interface {
 	Reset() error
-	FindOrCreateDeviceByUid(uid string) (*Device, error)
-	UpdateDeviceActionToSyncIdToOutputJson(device *Device) error
-	CreateTodo(action ActionToSync) (*Todo, error)
+	FindOrCreateDeviceByUid(uid string) (Device, error)
+	UpdateDeviceActionToSyncIdToOutputJson(device Device) error
+	CreateTodo(action ActionToSync) (Todo, error)
 }
