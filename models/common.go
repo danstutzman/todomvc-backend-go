@@ -13,11 +13,11 @@ type Todo struct {
 }
 
 type ActionToSync struct {
-	Id              int    `json:"id"`
-	Type            string `json:"type"`
-	TodoIdMaybeTemp int    `json:"todoIdMaybeTemp"`
-	Title           string `json:"title"`
-	Completed       bool   `json:"completed"`
+	Id              int     `json:"id"`
+	Type            string  `json:"type"`
+	TodoIdMaybeTemp int     `json:"todoIdMaybeTemp"`
+	Title           *string `json:"title",omitempty`
+	Completed       *bool   `json:"completed",omitempty`
 }
 
 type Model interface {
@@ -25,7 +25,7 @@ type Model interface {
 	FindOrCreateDeviceByUid(uid string) (Device, error)
 	UpdateDeviceActionToSyncIdToOutputJson(device Device) error
 	CreateTodo(action ActionToSync) (Todo, error)
-	SetCompleted(completed bool, todoId int) (int, error)
+	UpdateTodo(action ActionToSync, todoId int) (int, error)
 	ListTodos() ([]Todo, error)
 	DeleteTodo(todoInt int) (int, error)
 }

@@ -135,9 +135,9 @@ func handleActionToSync(actionToSync models.ActionToSync,
 		}
 		return todo.Id, nil
 
-	case "TODO/SET_COMPLETED":
-		log.Printf("  Calling SetCompleted(%v)", actionToSync)
-		output, err := model.SetCompleted(actionToSync.Completed, todoId)
+	case "TODO/UPDATE_TODO":
+		log.Printf("  Calling UpdateTodo(%v)", actionToSync)
+		output, err := model.UpdateTodo(actionToSync, todoId)
 		if err != nil {
 			return 0, fmt.Errorf("Error from SetCompleted: %s", err)
 		}

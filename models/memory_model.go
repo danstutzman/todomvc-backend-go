@@ -35,8 +35,8 @@ func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
 func (model *MemoryModel) CreateTodo(action ActionToSync) (Todo, error) {
 	newTodo := Todo{
 		Id:        model.NextTodoId,
-		Title:     action.Title,
-		Completed: action.Completed,
+		Title:     *action.Title,
+		Completed: *action.Completed,
 	}
 	model.Todos = append(model.Todos, newTodo)
 	model.NextTodoId += 1
@@ -54,10 +54,15 @@ func (model *MemoryModel) UpdateDeviceActionToSyncIdToOutputJson(
 	return nil
 }
 
-func (model *MemoryModel) SetCompleted(completed bool, todoId int) (int, error) {
+func (model *MemoryModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
 	for i, todo := range model.Todos {
 		if todo.Id == todoId {
-			todo.Completed = completed
+			if action.Completed != nil {
+				todo.Completed = *action.Completed
+			}
+			if action.Title != nil {
+				todo.Title = *action.Title
+			}
 			model.Todos[i] = todo
 			return 1, nil
 		}

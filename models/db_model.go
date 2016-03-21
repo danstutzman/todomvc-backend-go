@@ -144,8 +144,8 @@ func (model *DbModel) findDeviceByUid(uid string) (Device, error) {
 
 func (model *DbModel) CreateTodo(action ActionToSync) (Todo, error) {
 	newTodo := Todo{
-		Title:     action.Title,
-		Completed: action.Completed,
+		Title:     *action.Title,
+		Completed: *action.Completed,
 	}
 	sql := `INSERT INTO todo_items(
   		title,
@@ -181,16 +181,29 @@ func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) erro
 }
 
 // returns number of rows updated (0 or 1)
-func (model *DbModel) SetCompleted(completed bool, todoId int) (int, error) {
-	sql := `UPDATE todo_items SET
-		  completed = $1
-			WHERE id = $2;`
-	result, err := model.db.Exec(sql, completed, todoId)
-	if err != nil {
-		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, completed=%s, id=%s: %s`,
-			sql, completed, todoId, err)
+func (model *DbModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
+	setSqls := []string{}
+	values := []interface{}{todoId} // first value is todoId
+	if action.Completed != nil {
+		setSqls = append(setSqls, fmt.Sprintf("completed = $%d", len(values)+1))
+		values = append(values, action.Completed)
 	}
-	return int64ErrToIntErr(result.RowsAffected())
+	if action.Title != nil {
+		setSqls = append(setSqls, fmt.Sprintf("title = $%d", len(values)+1))
+		values = append(values, action.Title)
+	}
+
+	if len(values) > 0 {
+		sql := "UPDATE todo_items SET " + strings.Join(setSqls, ", ") + " WHERE id = $1;"
+		result, err := model.db.Exec(sql, values...)
+		if err != nil {
+			return 0, fmt.Errorf(`Error from db.Exec with sql=%s, values=%v, id=%s: %s`,
+				sql, values, todoId, err)
+		}
+		return int64ErrToIntErr(result.RowsAffected())
+	} else {
+		return 0, nil
+	}
 }
 
 func (model *DbModel) ListTodos() ([]Todo, error) {
