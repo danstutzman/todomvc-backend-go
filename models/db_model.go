@@ -180,6 +180,19 @@ func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) erro
 	return nil
 }
 
+// returns number of rows updated (0 or 1)
+func (model *DbModel) SetCompleted(completed bool, todoId int) (int, error) {
+	sql := `UPDATE todo_items SET
+		  completed = $1
+			WHERE id = $2;`
+	result, err := model.db.Exec(sql, completed, todoId)
+	if err != nil {
+		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, completed=%s, id=%s: %s`,
+			sql, completed, todoId, err)
+	}
+	return int64ErrToIntErr(result.RowsAffected())
+}
+
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	output := map[string]int{}
 	for k, v := range input {
@@ -198,4 +211,12 @@ func mapStringIntToMapIntInt(input map[string]int) (map[int]int, error) {
 		output[kInt] = v
 	}
 	return output, nil
+}
+
+func int64ErrToIntErr(i int64, e error) (int, error) {
+	if int64(int(i)) == i { // if round-trip conversion succeeds
+		return int(i), e
+	} else {
+		return 0, fmt.Errorf("Couldn't convert int64 %d to int, also e=%s", i, e)
+	}
 }

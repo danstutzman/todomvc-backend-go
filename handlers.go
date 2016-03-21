@@ -79,21 +79,57 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 	}
 	log.Println("   Got device", device)
 
+	tempIdToId := map[int]int{}
 	for _, actionToSync := range body.ActionsToSync {
+		var todoId int
+		if actionToSync.Type != "TODOS/ADD_TODO" {
+			if actionToSync.TodoIdMaybeTemp < 0 {
+				var ok bool
+				todoId, ok = tempIdToId[actionToSync.TodoIdMaybeTemp]
+				if !ok {
+					return nil,
+						fmt.Errorf("Don't know todoId for temp id in action %v", actionToSync)
+				}
+			} else if actionToSync.TodoIdMaybeTemp > 0 {
+				todoId = actionToSync.TodoIdMaybeTemp
+			} else {
+				return nil, fmt.Errorf("Invalid TodoIdMaybeTemp in action %v", actionToSync)
+			}
+		}
+
 		existingOutput := device.ActionToSyncIdToOutput[actionToSync.Id]
 		if existingOutput == 0 {
+			var output int
+			var err error
 			switch actionToSync.Type {
+
 			case "TODOS/ADD_TODO":
 				log.Printf("  Calling CreateTodo(%v)", actionToSync)
 				todo, err := model.CreateTodo(actionToSync)
 				if err != nil {
 					return nil, fmt.Errorf("Error from CreateTodo: %s", err)
 				}
-				// immutable edit so we don't corrupt MemoryModel
-				device.ActionToSyncIdToOutput = immutableSetForMapIntInt(
-					device.ActionToSyncIdToOutput, actionToSync.Id, todo.Id)
+				tempIdToId[actionToSync.TodoIdMaybeTemp] = todo.Id
+				output = todo.Id
+
+			case "TODO/SET_COMPLETED":
+				log.Printf("  Calling SetCompleted(%v)", actionToSync)
+				output, err = model.SetCompleted(actionToSync.Completed, todoId)
+				if err != nil {
+					return nil, fmt.Errorf("Error from SetCompleted: %s", err)
+				}
+
 			default:
 				return nil, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
+			}
+
+			// immutable edit so we don't corrupt MemoryModel
+			device.ActionToSyncIdToOutput = immutableSetForMapIntInt(
+				device.ActionToSyncIdToOutput, actionToSync.Id, output)
+		} else {
+			if actionToSync.Type == "TODOS/ADD_TODO" {
+				tempIdToId[actionToSync.TodoIdMaybeTemp] =
+					device.ActionToSyncIdToOutput[actionToSync.Id]
 			}
 		}
 	}

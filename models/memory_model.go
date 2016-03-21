@@ -53,3 +53,14 @@ func (model *MemoryModel) UpdateDeviceActionToSyncIdToOutputJson(
 	}
 	return nil
 }
+
+func (model *MemoryModel) SetCompleted(completed bool, todoId int) (int, error) {
+	for i, todo := range model.Todos {
+		if todo.Id == todoId {
+			todo.Completed = completed
+			model.Todos[i] = todo
+			return 1, nil
+		}
+	}
+	return 0, nil
+}
