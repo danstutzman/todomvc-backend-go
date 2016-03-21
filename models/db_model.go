@@ -193,6 +193,28 @@ func (model *DbModel) SetCompleted(completed bool, todoId int) (int, error) {
 	return int64ErrToIntErr(result.RowsAffected())
 }
 
+func (model *DbModel) ListTodos() ([]Todo, error) {
+	sql := `SELECT id, title, completed FROM todo_items;`
+	rows, err := model.db.Query(sql)
+	if err != nil {
+		return nil, fmt.Errorf("Error from db.Query with sql=%s", sql, err)
+	}
+	defer rows.Close()
+
+	todos := []Todo{}
+	for rows.Next() {
+		var todo Todo
+		if err := rows.Scan(&todo.Id, &todo.Title, &todo.Completed); err != nil {
+			return nil, fmt.Errorf("Error from rows.Scan: %s", err)
+		}
+		todos = append(todos, todo)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("Error from rows.Err: %s", err)
+	}
+	return todos, nil
+}
+
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	output := map[string]int{}
 	for k, v := range input {

@@ -10,18 +10,9 @@ import (
 )
 
 type Response struct {
-	DeviceId               int
-	ActionToSyncIdToOutput map[int]int
-}
-
-func (response *Response) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		DeviceId               int            `json:"deviceId"`
-		ActionToSyncIdToOutput map[string]int `json:"actionToSyncIdToOutput"`
-	}{
-		DeviceId:               response.DeviceId,
-		ActionToSyncIdToOutput: mapIntIntToMapStringInt(response.ActionToSyncIdToOutput),
-	})
+	DeviceId               int            `json:"deviceId"`
+	ActionToSyncIdToOutput map[string]int `json:"actionToSyncIdToOutput"`
+	Todos                  []models.Todo  `json:"todos"`
 }
 
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
@@ -135,9 +126,15 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 	}
 	model.UpdateDeviceActionToSyncIdToOutputJson(device)
 
+	todos, err := model.ListTodos()
+	if err != nil {
+		return nil, fmt.Errorf("Error from ListTodos: %s", err)
+	}
+
 	response := Response{
 		DeviceId:               device.Id,
-		ActionToSyncIdToOutput: device.ActionToSyncIdToOutput,
+		ActionToSyncIdToOutput: mapIntIntToMapStringInt(device.ActionToSyncIdToOutput),
+		Todos: todos,
 	}
 	return &response, nil
 }

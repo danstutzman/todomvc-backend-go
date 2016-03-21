@@ -26,4 +26,5 @@ type Model interface {
 	UpdateDeviceActionToSyncIdToOutputJson(device Device) error
 	CreateTodo(action ActionToSync) (Todo, error)
 	SetCompleted(completed bool, todoId int) (int, error)
+	ListTodos() ([]Todo, error)
 }

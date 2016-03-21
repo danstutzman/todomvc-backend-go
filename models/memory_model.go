@@ -64,3 +64,9 @@ func (model *MemoryModel) SetCompleted(completed bool, todoId int) (int, error) 
 	}
 	return 0, nil
 }
+
+func (model *MemoryModel) ListTodos() ([]Todo, error) {
+	todosCopy := make([]Todo, len(model.Todos))
+	copy(todosCopy, model.Todos)
+	return todosCopy, nil
+}
