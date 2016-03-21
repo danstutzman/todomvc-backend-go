@@ -72,56 +72,21 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 
 	tempIdToId := map[int]int{}
 	for _, actionToSync := range body.ActionsToSync {
-		var todoId int
-		if actionToSync.Type != "TODOS/ADD_TODO" {
-			if actionToSync.TodoIdMaybeTemp < 0 {
-				var ok bool
-				todoId, ok = tempIdToId[actionToSync.TodoIdMaybeTemp]
-				if !ok {
-					return nil,
-						fmt.Errorf("Don't know todoId for temp id in action %v", actionToSync)
-				}
-			} else if actionToSync.TodoIdMaybeTemp > 0 {
-				todoId = actionToSync.TodoIdMaybeTemp
-			} else {
-				return nil, fmt.Errorf("Invalid TodoIdMaybeTemp in action %v", actionToSync)
-			}
-		}
-
-		existingOutput := device.ActionToSyncIdToOutput[actionToSync.Id]
-		if existingOutput == 0 {
-			var output int
-			var err error
-			switch actionToSync.Type {
-
-			case "TODOS/ADD_TODO":
-				log.Printf("  Calling CreateTodo(%v)", actionToSync)
-				todo, err := model.CreateTodo(actionToSync)
-				if err != nil {
-					return nil, fmt.Errorf("Error from CreateTodo: %s", err)
-				}
-				tempIdToId[actionToSync.TodoIdMaybeTemp] = todo.Id
-				output = todo.Id
-
-			case "TODO/SET_COMPLETED":
-				log.Printf("  Calling SetCompleted(%v)", actionToSync)
-				output, err = model.SetCompleted(actionToSync.Completed, todoId)
-				if err != nil {
-					return nil, fmt.Errorf("Error from SetCompleted: %s", err)
-				}
-
-			default:
-				return nil, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
+		_, alreadyExecuted := device.ActionToSyncIdToOutput[actionToSync.Id]
+		if !alreadyExecuted {
+			output, err := handleActionToSync(actionToSync, model, tempIdToId)
+			if err != nil {
+				return nil, fmt.Errorf("Error from handleActionToSync: %s", err)
 			}
 
 			// immutable edit so we don't corrupt MemoryModel
 			device.ActionToSyncIdToOutput = immutableSetForMapIntInt(
 				device.ActionToSyncIdToOutput, actionToSync.Id, output)
-		} else {
-			if actionToSync.Type == "TODOS/ADD_TODO" {
-				tempIdToId[actionToSync.TodoIdMaybeTemp] =
-					device.ActionToSyncIdToOutput[actionToSync.Id]
-			}
+		}
+
+		if actionToSync.Type == "TODOS/ADD_TODO" {
+			tempIdToId[actionToSync.TodoIdMaybeTemp] =
+				device.ActionToSyncIdToOutput[actionToSync.Id]
 		}
 	}
 	model.UpdateDeviceActionToSyncIdToOutputJson(device)
@@ -137,6 +102,50 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 		Todos: todos,
 	}
 	return &response, nil
+}
+
+// returns output -- the new TodoID if TODOS/ADD_TODOS, the number of rows updated
+// for other types
+func handleActionToSync(actionToSync models.ActionToSync,
+	model models.Model, tempIdToId map[int]int) (int, error) {
+
+	var todoId int
+	if actionToSync.Type != "TODOS/ADD_TODO" {
+		if actionToSync.TodoIdMaybeTemp < 0 {
+			var ok bool
+			todoId, ok = tempIdToId[actionToSync.TodoIdMaybeTemp]
+			if !ok {
+				return 0,
+					fmt.Errorf("Don't know todoId for temp id in action %v", actionToSync)
+			}
+		} else if actionToSync.TodoIdMaybeTemp > 0 {
+			todoId = actionToSync.TodoIdMaybeTemp
+		} else {
+			return 0, fmt.Errorf("Invalid TodoIdMaybeTemp in action %v", actionToSync)
+		}
+	}
+
+	switch actionToSync.Type {
+
+	case "TODOS/ADD_TODO":
+		log.Printf("  Calling CreateTodo(%v)", actionToSync)
+		todo, err := model.CreateTodo(actionToSync)
+		if err != nil {
+			return 0, fmt.Errorf("Error from CreateTodo: %s", err)
+		}
+		return todo.Id, nil
+
+	case "TODO/SET_COMPLETED":
+		log.Printf("  Calling SetCompleted(%v)", actionToSync)
+		output, err := model.SetCompleted(actionToSync.Completed, todoId)
+		if err != nil {
+			return 0, fmt.Errorf("Error from SetCompleted: %s", err)
+		}
+		return output, nil
+
+	default:
+		return 0, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
+	}
 }
 
 // Set input[keyToSet] = valueToSet in a copy of input (doesn't modify input)
