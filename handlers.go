@@ -143,6 +143,14 @@ func handleActionToSync(actionToSync models.ActionToSync,
 		}
 		return output, nil
 
+	case "TODOS/DELETE_TODO":
+		log.Printf("  Calling DeleteTodo(%v)", actionToSync)
+		output, err := model.DeleteTodo(todoId)
+		if err != nil {
+			return 0, fmt.Errorf("Error from DeleteTodo: %s", err)
+		}
+		return output, nil
+
 	default:
 		return 0, fmt.Errorf("Unknown type in actionToSync: %v", actionToSync)
 	}

@@ -27,4 +27,5 @@ type Model interface {
 	CreateTodo(action ActionToSync) (Todo, error)
 	SetCompleted(completed bool, todoId int) (int, error)
 	ListTodos() ([]Todo, error)
+	DeleteTodo(todoInt int) (int, error)
 }

@@ -215,6 +215,16 @@ func (model *DbModel) ListTodos() ([]Todo, error) {
 	return todos, nil
 }
 
+func (model *DbModel) DeleteTodo(todoId int) (int, error) {
+	sql := `DELETE FROM todo_items WHERE id = $1;`
+	result, err := model.db.Exec(sql, todoId)
+	if err != nil {
+		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, todoId=%s: %s`,
+			sql, todoId, err)
+	}
+	return int64ErrToIntErr(result.RowsAffected())
+}
+
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	output := map[string]int{}
 	for k, v := range input {

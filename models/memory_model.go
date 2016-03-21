@@ -70,3 +70,17 @@ func (model *MemoryModel) ListTodos() ([]Todo, error) {
 	copy(todosCopy, model.Todos)
 	return todosCopy, nil
 }
+
+func (model *MemoryModel) DeleteTodo(todoId int) (int, error) {
+	numRowsDeleted := 0
+	newTodos := []Todo{}
+	for _, todo := range model.Todos {
+		if todo.Id == todoId {
+			numRowsDeleted += 1
+		} else {
+			newTodos = append(newTodos, todo)
+		}
+	}
+	model.Todos = newTodos
+	return numRowsDeleted, nil
+}
