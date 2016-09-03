@@ -25,31 +25,45 @@ func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 
 func handleRequest(writer http.ResponseWriter, request *http.Request,
 	model models.Model) {
+	// Set Access-Control-Allow-Origin for all requests
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-	var body Body
-	decoder := json.NewDecoder(request.Body)
-	if err := decoder.Decode(&body); err != nil {
-		http.Error(writer, fmt.Sprintf("Error parsing JSON %s: %s", request.Body, err),
-			http.StatusBadRequest)
+	switch request.Method {
+	case "GET":
+		writer.Write([]byte("This API expects POST requests"))
+	case "OPTIONS":
+		writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		writer.Write([]byte("OK"))
+	case "POST":
+		var body Body
+		decoder := json.NewDecoder(request.Body)
+		if err := decoder.Decode(&body); err != nil {
+			http.Error(writer, fmt.Sprintf("Error parsing JSON %s: %s", request.Body, err),
+				http.StatusBadRequest)
+			return
+		}
+
+		response, err := handleBody(body, model)
+		if err != nil {
+			http.Error(writer, fmt.Sprintf("Error from handleBody: %s", err),
+				http.StatusBadRequest)
+			return
+		}
+
+		responseBytes, err := json.Marshal(response)
+		if err != nil {
+			http.Error(writer, fmt.Sprintf("Error marshaling JSON %s: %s", response, err),
+				http.StatusInternalServerError)
+			return
+		}
+
+		writer.Header().Set("Content-Type", "application/json")
+		writer.Write(responseBytes)
+	default:
+		http.Error(writer, fmt.Sprintf("HTTP method not allowed"),
+			http.StatusMethodNotAllowed)
 		return
 	}
-
-	response, err := handleBody(body, model)
-	if err != nil {
-		http.Error(writer, fmt.Sprintf("Error from handleBody: %s", err),
-			http.StatusBadRequest)
-		return
-	}
-
-	responseJson, err := json.Marshal(response)
-	if err != nil {
-		http.Error(writer, fmt.Sprintf("Error marshaling JSON %s: %s", response, err),
-			http.StatusInternalServerError)
-		return
-	}
-
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Write(responseJson)
 }
 
 func handleBody(body Body, model models.Model) (*Response, error) {
