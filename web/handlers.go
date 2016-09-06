@@ -1,9 +1,9 @@
 package web
 
 import (
-	"../model"
 	"encoding/json"
 	"fmt"
+	"github.com/danielstutzman/todomvc-backend-go/model"
 	"log"
 	"net/http"
 	"strconv"

@@ -1,9 +1,9 @@
 package web
 
 import (
-	"../model"
 	"bufio"
 	"encoding/json"
+	"github.com/danielstutzman/todomvc-backend-go/model"
 	"log"
 	"net"
 	"net/http"

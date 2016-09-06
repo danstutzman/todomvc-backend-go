@@ -1,11 +1,11 @@
 package main
 
 import (
-	"./model"
-	"./web"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/danielstutzman/todomvc-backend-go/model"
+	"github.com/danielstutzman/todomvc-backend-go/web"
 	"log"
 	"os"
 )
