@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./models"
+	"./model"
 	"bufio"
 	"database/sql"
 	"encoding/json"
@@ -17,9 +17,9 @@ import (
 
 type Body struct {
 	// ResetModel is for testing purposes
-	ResetModel    bool                  `json:"resetModel"`
-	DeviceUid     string                `json:"deviceUid"`
-	ActionsToSync []models.ActionToSync `json:"actionsToSync"`
+	ResetModel    bool                 `json:"resetModel"`
+	DeviceUid     string               `json:"deviceUid"`
+	ActionsToSync []model.ActionToSync `json:"actionsToSync"`
 }
 
 type CommandLineArgs struct {
@@ -89,7 +89,7 @@ func mustOpenPostgres(postgresCredentialsPath string) *sql.DB {
 	return db
 }
 
-func mustRunWebServer(model models.Model) {
+func mustRunWebServer(model model.Model) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handleRequest(w, r, model)
 	})
@@ -100,7 +100,7 @@ func mustRunWebServer(model models.Model) {
 	}
 }
 
-func mustRunSocketServer(socketPath string, model models.Model) {
+func mustRunSocketServer(socketPath string, model model.Model) {
 	log.Printf("Listening on %s...", socketPath)
 	l, err := net.Listen("unix", socketPath)
 	if err != nil {
@@ -166,21 +166,21 @@ func mustRunSocketServer(socketPath string, model models.Model) {
 func main() {
 	args := mustParseFlags()
 
-	var model models.Model
+	var model_ model.Model
 	if args.postgresCredentialsPath != "" {
-		model = models.NewDbModel(mustOpenPostgres(args.postgresCredentialsPath))
+		model_ = model.NewDbModel(mustOpenPostgres(args.postgresCredentialsPath))
 	} else if args.inMemoryDb {
-		model = &models.MemoryModel{
+		model_ = &model.MemoryModel{
 			NextDeviceId: 1,
-			Devices:      []models.Device{},
+			Devices:      []model.Device{},
 		}
 	} else {
 		log.Fatal("Supply either -postgres_credentials_path or -in_memory_db")
 	}
 
 	if args.socketPath != "" {
-		mustRunSocketServer(args.socketPath, model)
+		mustRunSocketServer(args.socketPath, model_)
 	} else {
-		mustRunWebServer(model)
+		mustRunWebServer(model_)
 	}
 }

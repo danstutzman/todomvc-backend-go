@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./models"
+	"./model"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +12,7 @@ import (
 type Response struct {
 	DeviceId               int            `json:"deviceId"`
 	ActionToSyncIdToOutput map[string]int `json:"actionToSyncIdToOutput"`
-	Todos                  []models.Todo  `json:"todos"`
+	Todos                  []model.Todo   `json:"todos"`
 }
 
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
@@ -24,7 +24,7 @@ func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 }
 
 func handleRequest(writer http.ResponseWriter, request *http.Request,
-	model models.Model) {
+	model model.Model) {
 	// Set Access-Control-Allow-Origin for all requests
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -66,7 +66,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request,
 	}
 }
 
-func handleBody(body Body, model models.Model) (*Response, error) {
+func handleBody(body Body, model model.Model) (*Response, error) {
 	log.Printf("-- Got body %v", body)
 
 	if body.ResetModel {
@@ -120,8 +120,8 @@ func handleBody(body Body, model models.Model) (*Response, error) {
 
 // returns output -- the new TodoID if TODOS/ADD_TODOS, the number of rows updated
 // for other types
-func handleActionToSync(actionToSync models.ActionToSync,
-	model models.Model, tempIdToId map[int]int) (int, error) {
+func handleActionToSync(actionToSync model.ActionToSync,
+	model model.Model, tempIdToId map[int]int) (int, error) {
 
 	var todoId int
 	if actionToSync.Type != "TODOS/ADD_TODO" {
