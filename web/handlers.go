@@ -1,7 +1,7 @@
-package main
+package web
 
 import (
-	"./model"
+	"../model"
 	"encoding/json"
 	"fmt"
 	"log"
