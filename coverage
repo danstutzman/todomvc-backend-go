@@ -1,0 +1,4 @@
+#!/bin/bash -ex
+go test ./web -coverprofile=coverage.out
+go tool cover -html=coverage.out
+rm coverage.out

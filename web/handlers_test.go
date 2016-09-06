@@ -1,8 +1,8 @@
 package web
 
 import (
-	"./models"
 	"fmt"
+	models "github.com/danielstutzman/todomvc-backend-go/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
