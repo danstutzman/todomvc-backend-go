@@ -1,0 +1,20 @@
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - mkdir -p $HOME/golang # for GOROOT (contains the Go binary & core packages)
+    - mkdir -p $HOME/gopath # for GOPATH (contains code and external packages)
+    - curl https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz 2>/dev/null > go1.7.linux-amd64.tar.gz
+    - tar -C $HOME/golang -xzf go1.7.linux-amd64.tar.gz
+    - GOROOT=$HOME/golang/go
+    - GOPATH=$HOME/gopath
+    
+    - mkdir -p $GOPATH/src/github.com/danielstutzman
+    - rm -rf $GOPATH/src/github.com/danielstutzman/todomvc-backend-go
+    - cp -R $PWD $GOPATH/src/github.com/danielstutzman
+    - cd $GOPATH/src/github.com/danielstutzman/todomvc-backend-go
+    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go build
+    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go vet
+    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go test ./web
