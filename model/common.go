@@ -16,8 +16,8 @@ type ActionToSync struct {
 	Id              int     `json:"id"`
 	Type            string  `json:"type"`
 	TodoIdMaybeTemp int     `json:"todoIdMaybeTemp"`
-	Title           *string `json:"title",omitempty`
-	Completed       *bool   `json:"completed",omitempty`
+	Title           *string `json:"title,omitempty"`
+	Completed       *bool   `json:"completed,omitempty"`
 }
 
 type Model interface {

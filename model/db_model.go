@@ -89,7 +89,7 @@ func (model *DbModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
 					return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
 				}
 			} else {
-				return Device{}, fmt.Errorf("Error from createDevice: %s", uid, insertErr)
+				return Device{}, fmt.Errorf("Error from createDevice '%s': %s", uid, insertErr)
 			}
 		}
 	}
@@ -138,7 +138,7 @@ func (model *DbModel) findDeviceByUid(uid string) (Device, error) {
 	} else if err == SqlErrNoRows {
 		return Device{}, nil
 	} else {
-		return Device{}, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql)
+		return Device{}, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql, err)
 	}
 }
 
@@ -174,7 +174,7 @@ func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) erro
 	_, err = model.db.Exec(sql, string(actionToSyncIdToOutputJson), device.Id)
 	if err != nil {
 		return fmt.Errorf(`Error from db.Exec with sql=%s,
-			  action_to_sync_id_to_output_json=%s, id=%s: %s`,
+			  action_to_sync_id_to_output_json=%s, id=%d: %s`,
 			sql, string(actionToSyncIdToOutputJson), device.Id, err)
 	}
 	return nil
@@ -197,7 +197,7 @@ func (model *DbModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
 		sql := "UPDATE todo_items SET " + strings.Join(setSqls, ", ") + " WHERE id = $1;"
 		result, err := model.db.Exec(sql, values...)
 		if err != nil {
-			return 0, fmt.Errorf(`Error from db.Exec with sql=%s, values=%v, id=%s: %s`,
+			return 0, fmt.Errorf(`Error from db.Exec with sql=%s, values=%v, id=%d: %s`,
 				sql, values, todoId, err)
 		}
 		return int64ErrToIntErr(result.RowsAffected())
@@ -210,7 +210,7 @@ func (model *DbModel) ListTodos() ([]Todo, error) {
 	sql := `SELECT id, title, completed FROM todo_items;`
 	rows, err := model.db.Query(sql)
 	if err != nil {
-		return nil, fmt.Errorf("Error from db.Query with sql=%s", sql, err)
+		return nil, fmt.Errorf("Error from db.Query with sql=%s: %s", sql, err)
 	}
 	defer rows.Close()
 
@@ -232,7 +232,7 @@ func (model *DbModel) DeleteTodo(todoId int) (int, error) {
 	sql := `DELETE FROM todo_items WHERE id = $1;`
 	result, err := model.db.Exec(sql, todoId)
 	if err != nil {
-		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, todoId=%s: %s`,
+		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, todoId=%d: %s`,
 			sql, todoId, err)
 	}
 	return int64ErrToIntErr(result.RowsAffected())

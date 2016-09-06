@@ -52,7 +52,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request,
 
 		responseBytes, err := json.Marshal(response)
 		if err != nil {
-			http.Error(writer, fmt.Sprintf("Error marshaling JSON %s: %s", response, err),
+			http.Error(writer, fmt.Sprintf("Error marshaling JSON %v: %s", response, err),
 				http.StatusInternalServerError)
 			return
 		}

@@ -72,7 +72,7 @@ func MustRunSocketServer(socketPath string, model model.Model) {
 			responseJson, err := json.Marshal(response)
 			if err != nil {
 				l.Close()
-				log.Fatalf("Error marshaling JSON %s: %s", response, err)
+				log.Fatalf("Error marshaling JSON %v: %s", response, err)
 			}
 			log.Printf("Response: %s", responseJson)
 
