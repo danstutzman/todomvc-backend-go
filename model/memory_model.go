@@ -7,6 +7,12 @@ type MemoryModel struct {
 	NextTodoId   int
 }
 
+func NewMemoryModel() *MemoryModel {
+	model := MemoryModel{}
+	model.Reset()
+	return &model
+}
+
 func (model *MemoryModel) Reset() error {
 	model.Devices = []Device{}
 	model.NextDeviceId = 1

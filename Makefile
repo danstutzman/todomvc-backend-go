@@ -1,4 +1,4 @@
-.PHONY: start-local-gitlab start-local-gitlab-runner
+.PHONY: start-local-gitlab start-local-gitlab-runner coverage coverage-html
 
 start-local-gitlab:
 	gcloud compute firewall-rules create allow-http-for-http-tag --allow tcp:80 --target-tags http
@@ -22,3 +22,16 @@ start-local-gitlab-runner:
 		echo "Answers to questions: 1) http://gitlab.danstutzman.com/ci 2) See http://gitlab.danstutzman.com/root/todomvc-backend-go/runners for runners_token 3) (blank) 4) (blank) 5) shell" \
 		sudo gitlab-ci-multi-runner register; \
 		'
+
+coverage:
+	echo "mode: count" > .coverage-all.out
+	for PACKAGE in . ./model ./web; do \
+		echo > .coverage.out; \
+		go test -coverprofile=.coverage.out -covermode=count $$PACKAGE; \
+		tail -n +2 .coverage.out >> .coverage-all.out; \
+	done
+	rm .coverage.out
+	cat .coverage-all.out | awk -F' ' '{ all_lines += $$2; covered_lines += $$3 } END { print 100 * covered_lines / all_lines, "% covered" }'
+
+coverage-html: coverage
+	go tool cover -html=.coverage-all.out

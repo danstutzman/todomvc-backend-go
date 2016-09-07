@@ -1,5 +1,6 @@
 # Backend in Go for TodoMVC (sample to-do list app)
 [![build status](https://gitlab.com/danstutzman/todomvc-backend-go/badges/master/build.svg)](https://gitlab.com/danstutzman/todomvc-backend-go/commits/master)
+[![coverage report](https://gitlab.com/danstutzman/todomvc-backend-go/badges/master/coverage.svg)](https://gitlab.com/danstutzman/todomvc-backend-go/commits/master)
 
 ## How to install, build, and run ##
 ```
