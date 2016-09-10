@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"fmt"
-	models "github.com/danielstutzman/todomvc-backend-go/model"
+	"github.com/danielstutzman/todomvc-backend-go/models"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

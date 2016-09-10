@@ -1,2 +1,2 @@
 #!/bin/bash -ex
-go vet . ./handlers ./model
+go vet . ./handlers ./models

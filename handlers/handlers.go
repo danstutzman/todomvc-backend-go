@@ -2,22 +2,22 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/danielstutzman/todomvc-backend-go/model"
+	"github.com/danielstutzman/todomvc-backend-go/models"
 	"log"
 	"strconv"
 )
 
 type Body struct {
 	// ResetModel is for testing purposes
-	ResetModel    bool                 `json:"resetModel"`
-	DeviceUid     string               `json:"deviceUid"`
-	ActionsToSync []model.ActionToSync `json:"actionsToSync"`
+	ResetModel    bool                  `json:"resetModel"`
+	DeviceUid     string                `json:"deviceUid"`
+	ActionsToSync []models.ActionToSync `json:"actionsToSync"`
 }
 
 type Response struct {
 	DeviceId               int            `json:"deviceId"`
 	ActionToSyncIdToOutput map[string]int `json:"actionToSyncIdToOutput"`
-	Todos                  []model.Todo   `json:"todos"`
+	Todos                  []models.Todo  `json:"todos"`
 }
 
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
@@ -28,7 +28,7 @@ func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	return output
 }
 
-func HandleBody(body Body, model model.Model) (*Response, error) {
+func HandleBody(body Body, model models.Model) (*Response, error) {
 	log.Printf("-- Got body %v", body)
 
 	if body.ResetModel {
@@ -72,8 +72,8 @@ func HandleBody(body Body, model model.Model) (*Response, error) {
 
 // returns output -- the new TodoID if TODOS/ADD_TODOS, the number of rows updated
 // for other types
-func handleActionToSync(actionToSync model.ActionToSync,
-	model model.Model, tempIdToId map[int]int) (int, error) {
+func handleActionToSync(actionToSync models.ActionToSync,
+	model models.Model, tempIdToId map[int]int) (int, error) {
 
 	var todoId int
 	if actionToSync.Type != "TODOS/ADD_TODO" {

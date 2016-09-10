@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/danielstutzman/todomvc-backend-go/model"
+	"github.com/danielstutzman/todomvc-backend-go/models"
 	"log"
 	"os"
 )
@@ -27,14 +27,14 @@ func mustParseFlags() CommandLineArgs {
 	return args
 }
 
-func readPostgresCredentials(path string) model.PostgresCredentials {
+func readPostgresCredentials(path string) models.PostgresCredentials {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(fmt.Errorf("Couldn't os.Open postgres_credentials: %s", err))
 	}
 	defer file.Close()
 
-	creds := model.PostgresCredentials{}
+	creds := models.PostgresCredentials{}
 	decoder := json.NewDecoder(file)
 	if err = decoder.Decode(&creds); err != nil {
 		log.Fatalf("Error using decoder.Decode to parse JSON at %s: %s", path, err)
@@ -45,22 +45,22 @@ func readPostgresCredentials(path string) model.PostgresCredentials {
 func main() {
 	args := mustParseFlags()
 
-	var model_ model.Model
+	var model models.Model
 	if args.postgresCredentialsPath != "" {
 		creds := readPostgresCredentials(args.postgresCredentialsPath)
-		model_ = model.NewDbModel(model.MustOpenPostgres(creds))
+		model = models.NewDbModel(models.MustOpenPostgres(creds))
 	} else if args.inMemoryDb {
-		model_ = &model.MemoryModel{
+		model = &models.MemoryModel{
 			NextDeviceId: 1,
-			Devices:      []model.Device{},
+			Devices:      []models.Device{},
 		}
 	} else {
 		log.Fatal("Supply either -postgres_credentials_path or -in_memory_db")
 	}
 
 	if args.socketPath != "" {
-		mustRunSocketServer(args.socketPath, model_)
+		mustRunSocketServer(args.socketPath, model)
 	} else {
-		mustRunWebServer(model_)
+		mustRunWebServer(model)
 	}
 }

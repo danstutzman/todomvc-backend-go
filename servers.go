@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/danielstutzman/todomvc-backend-go/handlers"
-	"github.com/danielstutzman/todomvc-backend-go/model"
+	"github.com/danielstutzman/todomvc-backend-go/models"
 	"log"
 	"net"
 	"net/http"
@@ -13,7 +13,7 @@ import (
 	"os/signal"
 )
 
-func mustRunWebServer(model model.Model) {
+func mustRunWebServer(model models.Model) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		handleRequest(w, r, model)
 	})
@@ -24,7 +24,7 @@ func mustRunWebServer(model model.Model) {
 	}
 }
 
-func mustRunSocketServer(socketPath string, model model.Model) {
+func mustRunSocketServer(socketPath string, model models.Model) {
 	log.Printf("Listening on %s...", socketPath)
 	l, err := net.Listen("unix", socketPath)
 	if err != nil {
@@ -88,7 +88,7 @@ func mustRunSocketServer(socketPath string, model model.Model) {
 } // end mustRunSocketServer
 
 func handleRequest(writer http.ResponseWriter, request *http.Request,
-	model model.Model) {
+	model models.Model) {
 	// Set Access-Control-Allow-Origin for all requests
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 

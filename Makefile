@@ -24,10 +24,10 @@ start-local-gitlab-runner:
 		'
 
 coverage:
-	set -e; for PACKAGE in . ./handlers ./model; do \
+	set -e; for PACKAGE in . ./handlers ./models; do \
 		rm -f $$PACKAGE.coverage.out; \
 		touch $$PACKAGE.coverage.out; \
-		go test -coverprofile=$$PACKAGE.coverage.out $$PACKAGE -coverpkg .,./handlers,./model; \
+		go test -coverprofile=$$PACKAGE.coverage.out $$PACKAGE -coverpkg .,./handlers,./models; \
 	done
 	echo "mode: set" > .coverage-all.out
 	cat ..coverage.out *.coverage.out | grep -v mode: | sort -r \
