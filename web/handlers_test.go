@@ -44,3 +44,34 @@ func TestHandleBodyExistingDevice(t *testing.T) {
 		{Id: 1, Uid: "here", ActionToSyncIdToOutput: map[int]int{}},
 	}, model.Devices)
 }
+
+func TestCreateTodo(t *testing.T) {
+	model := &models.MemoryModel{
+		NextDeviceId: 2,
+		Devices: []models.Device{
+			{Id: 1, Uid: "here", ActionToSyncIdToOutput: map[int]int{}},
+		},
+		NextTodoId: 1,
+	}
+	spec := struct {
+		Title     string
+		Completed bool
+	}{"t", true}
+	_, err := HandleBody(Body{
+		DeviceUid: "here",
+		ActionsToSync: []models.ActionToSync{{
+			Id:              1,
+			Type:            "TODOS/ADD_TODO",
+			TodoIdMaybeTemp: -1,
+			Title:           &spec.Title,
+			Completed:       &spec.Completed,
+		}},
+	}, model)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, []models.Todo{{
+		Id:        1,
+		Title:     spec.Title,
+		Completed: spec.Completed,
+	}}, model.Todos)
+	assert.Equal(t, 2, model.NextTodoId)
+}
