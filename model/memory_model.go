@@ -13,18 +13,17 @@ func NewMemoryModel() *MemoryModel {
 	return &model
 }
 
-func (model *MemoryModel) Reset() error {
+func (model *MemoryModel) Reset() {
 	model.Devices = []Device{}
 	model.NextDeviceId = 1
 	model.Todos = []Todo{}
 	model.NextTodoId = 1
-	return nil
 }
 
-func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
+func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) Device {
 	for _, device := range model.Devices {
 		if device.Uid == uid {
-			return device, nil
+			return device
 		}
 	}
 
@@ -35,10 +34,10 @@ func (model *MemoryModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
 	}
 	model.Devices = append(model.Devices, newDevice)
 	model.NextDeviceId += 1
-	return newDevice, nil
+	return newDevice
 }
 
-func (model *MemoryModel) CreateTodo(action ActionToSync) (Todo, error) {
+func (model *MemoryModel) CreateTodo(action ActionToSync) Todo {
 	newTodo := Todo{
 		Id:        model.NextTodoId,
 		Title:     *action.Title,
@@ -46,21 +45,20 @@ func (model *MemoryModel) CreateTodo(action ActionToSync) (Todo, error) {
 	}
 	model.Todos = append(model.Todos, newTodo)
 	model.NextTodoId += 1
-	return newTodo, nil
+	return newTodo
 }
 
 func (model *MemoryModel) UpdateDeviceActionToSyncIdToOutputJson(
-	updatedDevice Device) error {
+	updatedDevice Device) {
 	for i, device := range model.Devices {
 		if device.Uid == updatedDevice.Uid {
 			device.ActionToSyncIdToOutput = updatedDevice.ActionToSyncIdToOutput
 			model.Devices[i] = device
 		}
 	}
-	return nil
 }
 
-func (model *MemoryModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
+func (model *MemoryModel) UpdateTodo(action ActionToSync, todoId int) int {
 	for i, todo := range model.Todos {
 		if todo.Id == todoId {
 			if action.Completed != nil {
@@ -70,19 +68,19 @@ func (model *MemoryModel) UpdateTodo(action ActionToSync, todoId int) (int, erro
 				todo.Title = *action.Title
 			}
 			model.Todos[i] = todo
-			return 1, nil
+			return 1
 		}
 	}
-	return 0, nil
+	return 0
 }
 
-func (model *MemoryModel) ListTodos() ([]Todo, error) {
+func (model *MemoryModel) ListTodos() []Todo {
 	todosCopy := make([]Todo, len(model.Todos))
 	copy(todosCopy, model.Todos)
-	return todosCopy, nil
+	return todosCopy
 }
 
-func (model *MemoryModel) DeleteTodo(todoId int) (int, error) {
+func (model *MemoryModel) DeleteTodo(todoId int) int {
 	numRowsDeleted := 0
 	newTodos := []Todo{}
 	for _, todo := range model.Todos {
@@ -93,5 +91,5 @@ func (model *MemoryModel) DeleteTodo(todoId int) (int, error) {
 		}
 	}
 	model.Todos = newTodos
-	return numRowsDeleted, nil
+	return numRowsDeleted
 }

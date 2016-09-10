@@ -18,84 +18,40 @@ func NewDbModel(db *sql.DB) *DbModel {
 	return &DbModel{db: db}
 }
 
-func (model *DbModel) Reset() error {
-	var err error
-
-	err = model.deleteFrom("devices")
-	if err != nil {
-		return fmt.Errorf("Error from deleteFrom(devices): %s", err)
-	}
-
-	err = model.restartSequence("devices_id_seq")
-	if err != nil {
-		return fmt.Errorf("Error from restartSequence(devices_id_seq): %s", err)
-	}
-
-	err = model.deleteFrom("todo_items")
-	if err != nil {
-		return fmt.Errorf("Error from deleteFrom(todo_items): %s", err)
-	}
-
-	err = model.restartSequence("todo_items_id_seq")
-	if err != nil {
-		return fmt.Errorf("Error from restartSequence(todo_items_id_seq): %s", err)
-	}
-
-	return nil
+func (model *DbModel) Reset() {
+	model.deleteFrom("devices")
+	model.restartSequence("devices_id_seq")
+	model.deleteFrom("todo_items")
+	model.restartSequence("todo_items_id_seq")
 }
 
-func (model *DbModel) deleteFrom(tableName string) error {
+func (model *DbModel) deleteFrom(tableName string) {
 	sql := fmt.Sprintf("DELETE FROM \"%s\"", tableName)
 	_, err := model.db.Exec(sql)
 	if err != nil {
-		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+		panic(fmt.Sprintf("Error from db.Exec with sql=%s: %s", sql, err))
 	}
-	return nil
 }
 
-func (model *DbModel) restartSequence(sequenceName string) error {
+func (model *DbModel) restartSequence(sequenceName string) {
 	sql := fmt.Sprintf("ALTER SEQUENCE \"%s\" RESTART WITH 1;", sequenceName)
 	_, err := model.db.Exec(sql)
 	if err != nil {
-		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+		panic(fmt.Sprintf("Error from db.Exec with sql=%s: %s", sql, err))
 	}
-	return nil
 }
 
-func (model *DbModel) FindOrCreateDeviceByUid(uid string) (Device, error) {
-	device, find1Err := model.findDeviceByUid(uid)
-	if find1Err != nil {
-		return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find1Err)
-	}
-
+func (model *DbModel) FindOrCreateDeviceByUid(uid string) Device {
+	device := model.findDeviceByUid(uid)
 	if device.Id != 0 {
-		return device, nil
+		return device
 	} else {
-		insertErr := model.createDevice(uid)
-		if insertErr == nil {
-			device, find2Err := model.findDeviceByUid(uid)
-			if find2Err == nil {
-				return device, nil
-			} else {
-				return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
-			}
-		} else {
-			if strings.HasPrefix(insertErr.Error(),
-				"pq: duplicate key value violates unique constraint") {
-				device, find2Err := model.findDeviceByUid(uid)
-				if find2Err == nil {
-					return device, nil
-				} else {
-					return Device{}, fmt.Errorf("Error from findDeviceByUid: %s", find2Err)
-				}
-			} else {
-				return Device{}, fmt.Errorf("Error from createDevice '%s': %s", uid, insertErr)
-			}
-		}
+		model.createDeviceIgnoringDuplicate(uid)
+		return model.findDeviceByUid(uid)
 	}
 }
 
-func (model *DbModel) createDevice(uid string) error {
+func (model *DbModel) createDeviceIgnoringDuplicate(uid string) {
 	sql := `INSERT INTO devices(
 			uid,
 			action_to_sync_id_to_output_json,
@@ -107,12 +63,16 @@ func (model *DbModel) createDevice(uid string) error {
 		);`
 	_, err := model.db.Exec(sql, uid)
 	if err != nil {
-		return fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+		if strings.HasPrefix(err.Error(),
+			"pq: duplicate key value violates unique constraint") {
+			// ignore it
+		} else {
+			panic(fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err))
+		}
 	}
-	return err
 }
 
-func (model *DbModel) findDeviceByUid(uid string) (Device, error) {
+func (model *DbModel) findDeviceByUid(uid string) Device {
 	var device Device
 	var actionToSyncIdToOutputJson string
 	sql := `SELECT id, uid, action_to_sync_id_to_output_json
@@ -124,25 +84,19 @@ func (model *DbModel) findDeviceByUid(uid string) (Device, error) {
 		var actionToSyncIdToOutput map[string]int
 		if err := json.Unmarshal([]byte(actionToSyncIdToOutputJson),
 			&actionToSyncIdToOutput); err != nil {
-			return Device{}, fmt.Errorf("Error from unmarshaling JSON '%s': %s",
-				actionToSyncIdToOutputJson, err)
+			panic(fmt.Errorf("Error from unmarshaling JSON '%s': %s",
+				actionToSyncIdToOutputJson, err))
 		}
-
-		device.ActionToSyncIdToOutput, err =
-			mapStringIntToMapIntInt(actionToSyncIdToOutput)
-		if err != nil {
-			return Device{}, fmt.Errorf("Error from mapStringIntToMapIntInt: %s", err)
-		}
-
-		return device, nil
+		device.ActionToSyncIdToOutput = mapStringIntToMapIntInt(actionToSyncIdToOutput)
+		return device
 	} else if err == SqlErrNoRows {
-		return Device{}, nil
+		return Device{}
 	} else {
-		return Device{}, fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql, err)
+		panic(fmt.Errorf("Error from db.QueryRow with sql=%s: %s", sql, err))
 	}
 }
 
-func (model *DbModel) CreateTodo(action ActionToSync) (Todo, error) {
+func (model *DbModel) CreateTodo(action ActionToSync) Todo {
 	newTodo := Todo{
 		Title:     *action.Title,
 		Completed: *action.Completed,
@@ -156,16 +110,16 @@ func (model *DbModel) CreateTodo(action ActionToSync) (Todo, error) {
 		) RETURNING id;`
 	err := model.db.QueryRow(sql, newTodo.Title, newTodo.Completed).Scan(&newTodo.Id)
 	if err != nil {
-		return Todo{}, fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err)
+		panic(fmt.Errorf("Error from db.Exec with sql=%s: %s", sql, err))
 	}
-	return newTodo, nil
+	return newTodo
 }
 
-func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) error {
+func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) {
 	actionToSyncIdToOutputJson, err :=
 		json.Marshal(mapIntIntToMapStringInt(device.ActionToSyncIdToOutput))
 	if err != nil {
-		return fmt.Errorf(fmt.Sprintf("Error marshaling JSON: %s", err))
+		panic(fmt.Errorf(fmt.Sprintf("Error marshaling JSON: %s", err)))
 	}
 
 	sql := `UPDATE devices SET
@@ -173,15 +127,14 @@ func (model *DbModel) UpdateDeviceActionToSyncIdToOutputJson(device Device) erro
 			WHERE id = $2;`
 	_, err = model.db.Exec(sql, string(actionToSyncIdToOutputJson), device.Id)
 	if err != nil {
-		return fmt.Errorf(`Error from db.Exec with sql=%s,
+		panic(fmt.Errorf(`Error from db.Exec with sql=%s,
 			  action_to_sync_id_to_output_json=%s, id=%d: %s`,
-			sql, string(actionToSyncIdToOutputJson), device.Id, err)
+			sql, string(actionToSyncIdToOutputJson), device.Id, err))
 	}
-	return nil
 }
 
 // returns number of rows updated (0 or 1)
-func (model *DbModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
+func (model *DbModel) UpdateTodo(action ActionToSync, todoId int) int {
 	setSqls := []string{}
 	values := []interface{}{todoId} // first value is todoId
 	if action.Completed != nil {
@@ -197,20 +150,20 @@ func (model *DbModel) UpdateTodo(action ActionToSync, todoId int) (int, error) {
 		sql := "UPDATE todo_items SET " + strings.Join(setSqls, ", ") + " WHERE id = $1;"
 		result, err := model.db.Exec(sql, values...)
 		if err != nil {
-			return 0, fmt.Errorf(`Error from db.Exec with sql=%s, values=%v, id=%d: %s`,
-				sql, values, todoId, err)
+			panic(fmt.Errorf(`Error from db.Exec with sql=%s, values=%v, id=%d: %s`,
+				sql, values, todoId, err))
 		}
-		return int64ErrToIntErr(result.RowsAffected())
+		return convertRowsAffectedToInt(result.RowsAffected())
 	} else {
-		return 0, nil
+		return 0
 	}
 }
 
-func (model *DbModel) ListTodos() ([]Todo, error) {
+func (model *DbModel) ListTodos() []Todo {
 	sql := `SELECT id, title, completed FROM todo_items;`
 	rows, err := model.db.Query(sql)
 	if err != nil {
-		return nil, fmt.Errorf("Error from db.Query with sql=%s: %s", sql, err)
+		panic(fmt.Sprintf("Error from db.Query with sql=%s: %s", sql, err))
 	}
 	defer rows.Close()
 
@@ -218,24 +171,24 @@ func (model *DbModel) ListTodos() ([]Todo, error) {
 	for rows.Next() {
 		var todo Todo
 		if err := rows.Scan(&todo.Id, &todo.Title, &todo.Completed); err != nil {
-			return nil, fmt.Errorf("Error from rows.Scan: %s", err)
+			panic(fmt.Sprintf("Error from rows.Scan: %s", err))
 		}
 		todos = append(todos, todo)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("Error from rows.Err: %s", err)
+		panic(fmt.Errorf("Error from rows.Err: %s", err))
 	}
-	return todos, nil
+	return todos
 }
 
-func (model *DbModel) DeleteTodo(todoId int) (int, error) {
+func (model *DbModel) DeleteTodo(todoId int) int {
 	sql := `DELETE FROM todo_items WHERE id = $1;`
 	result, err := model.db.Exec(sql, todoId)
 	if err != nil {
-		return 0, fmt.Errorf(`Error from db.Exec with sql=%s, todoId=%d: %s`,
-			sql, todoId, err)
+		panic(fmt.Errorf(`Error from db.Exec with sql=%s, todoId=%d: %s`,
+			sql, todoId, err))
 	}
-	return int64ErrToIntErr(result.RowsAffected())
+	return convertRowsAffectedToInt(result.RowsAffected())
 }
 
 func mapIntIntToMapStringInt(input map[int]int) map[string]int {
@@ -246,22 +199,26 @@ func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	return output
 }
 
-func mapStringIntToMapIntInt(input map[string]int) (map[int]int, error) {
+func mapStringIntToMapIntInt(input map[string]int) map[int]int {
 	output := map[int]int{}
 	for kString, v := range input {
 		kInt, err := strconv.Atoi(kString)
 		if err != nil {
-			return nil, fmt.Errorf("Error from strconv.Atoi for '%s': %s", kString, err)
+			panic(fmt.Errorf("Error from strconv.Atoi for '%s': %s", kString, err))
 		}
 		output[kInt] = v
 	}
-	return output, nil
+	return output
 }
 
-func int64ErrToIntErr(i int64, e error) (int, error) {
+func convertRowsAffectedToInt(i int64, err error) int {
+	if err != nil {
+		panic(fmt.Errorf("Error from RowsAffected(): %s", err))
+	}
+
 	if int64(int(i)) == i { // if round-trip conversion succeeds
-		return int(i), e
+		return int(i)
 	} else {
-		return 0, fmt.Errorf("Couldn't convert int64 %d to int, also e=%s", i, e)
+		panic(fmt.Errorf("Couldn't convert int64 %d to int", i))
 	}
 }

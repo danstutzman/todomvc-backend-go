@@ -10,14 +10,21 @@ func pointToBool(b bool) *bool       { return &b }
 
 func TestCreateTodo(t *testing.T) {
 	model := NewMemoryModel()
-	model.CreateTodo(ActionToSync{
-		Title:     pointToString("t"),
-		Completed: pointToBool(true),
+	type NewTodoSpec struct {
+		Title     string
+		Completed bool
+	}
+	spec := NewTodoSpec{"t", true}
+	newTodo := model.CreateTodo(ActionToSync{
+		Title:     &spec.Title,
+		Completed: &spec.Completed,
 	})
+	assert.Equal(t, spec.Title, newTodo.Title)
+	assert.Equal(t, spec.Completed, newTodo.Completed)
 	assert.Equal(t, []Todo{{
 		Id:        1,
-		Title:     "t",
-		Completed: true,
+		Title:     spec.Title,
+		Completed: spec.Completed,
 	}}, model.Todos)
 	assert.Equal(t, 2, model.NextTodoId)
 }

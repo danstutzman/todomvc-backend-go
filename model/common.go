@@ -21,11 +21,11 @@ type ActionToSync struct {
 }
 
 type Model interface {
-	Reset() error
-	FindOrCreateDeviceByUid(uid string) (Device, error)
-	UpdateDeviceActionToSyncIdToOutputJson(device Device) error
-	CreateTodo(action ActionToSync) (Todo, error)
-	UpdateTodo(action ActionToSync, todoId int) (int, error)
-	ListTodos() ([]Todo, error)
-	DeleteTodo(todoInt int) (int, error)
+	Reset()
+	FindOrCreateDeviceByUid(uid string) Device
+	UpdateDeviceActionToSyncIdToOutputJson(device Device)
+	CreateTodo(action ActionToSync) Todo
+	UpdateTodo(action ActionToSync, todoId int) int
+	ListTodos() []Todo
+	DeleteTodo(todoInt int) int
 }

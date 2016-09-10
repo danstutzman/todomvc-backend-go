@@ -70,18 +70,13 @@ func handleBody(body Body, model model.Model) (*Response, error) {
 	log.Printf("-- Got body %v", body)
 
 	if body.ResetModel {
-		if err := model.Reset(); err != nil {
-			return nil, fmt.Errorf("Error from model.Reset: %s", err)
-		}
+		model.Reset()
 	}
 
 	if body.DeviceUid == "" {
 		return nil, fmt.Errorf("Blank DeviceUid")
 	}
-	device, err := model.FindOrCreateDeviceByUid(body.DeviceUid)
-	if err != nil {
-		return nil, fmt.Errorf("Error from FindOrCreateDeviceByUid: %s", err)
-	}
+	device := model.FindOrCreateDeviceByUid(body.DeviceUid)
 	log.Println("   Got device", device)
 
 	tempIdToId := map[int]int{}
@@ -105,15 +100,10 @@ func handleBody(body Body, model model.Model) (*Response, error) {
 	}
 	model.UpdateDeviceActionToSyncIdToOutputJson(device)
 
-	todos, err := model.ListTodos()
-	if err != nil {
-		return nil, fmt.Errorf("Error from ListTodos: %s", err)
-	}
-
 	response := Response{
 		DeviceId:               device.Id,
 		ActionToSyncIdToOutput: mapIntIntToMapStringInt(device.ActionToSyncIdToOutput),
-		Todos: todos,
+		Todos: model.ListTodos(),
 	}
 	return &response, nil
 }
@@ -143,26 +133,17 @@ func handleActionToSync(actionToSync model.ActionToSync,
 
 	case "TODOS/ADD_TODO":
 		log.Printf("  Calling CreateTodo(%v)", actionToSync)
-		todo, err := model.CreateTodo(actionToSync)
-		if err != nil {
-			return 0, fmt.Errorf("Error from CreateTodo: %s", err)
-		}
+		todo := model.CreateTodo(actionToSync)
 		return todo.Id, nil
 
 	case "TODO/UPDATE_TODO":
 		log.Printf("  Calling UpdateTodo(%v)", actionToSync)
-		output, err := model.UpdateTodo(actionToSync, todoId)
-		if err != nil {
-			return 0, fmt.Errorf("Error from SetCompleted: %s", err)
-		}
+		output := model.UpdateTodo(actionToSync, todoId)
 		return output, nil
 
 	case "TODOS/DELETE_TODO":
 		log.Printf("  Calling DeleteTodo(%v)", actionToSync)
-		output, err := model.DeleteTodo(todoId)
-		if err != nil {
-			return 0, fmt.Errorf("Error from DeleteTodo: %s", err)
-		}
+		output := model.DeleteTodo(todoId)
 		return output, nil
 
 	default:
