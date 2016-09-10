@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/danielstutzman/todomvc-backend-go/handlers"
 	"github.com/danielstutzman/todomvc-backend-go/model"
-	"github.com/danielstutzman/todomvc-backend-go/web"
 	"log"
 	"net"
 	"net/http"
@@ -52,13 +52,13 @@ func mustRunSocketServer(socketPath string, model model.Model) {
 		for scanner.Scan() {
 			bodyJson := scanner.Text()
 
-			var body web.Body
+			var body handlers.Body
 			if err := json.Unmarshal([]byte(bodyJson), &body); err != nil {
 				l.Close()
 				log.Fatalf("Error parsing JSON %s: %s", bodyJson, err)
 			}
 
-			response, err := web.HandleBody(body, model)
+			response, err := handlers.HandleBody(body, model)
 			if err != nil {
 				l.Close()
 				log.Fatalf("Error from HandleBody: %s", err)
@@ -99,7 +99,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request,
 		writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		writer.Write([]byte("OK"))
 	case "POST":
-		var body web.Body
+		var body handlers.Body
 		decoder := json.NewDecoder(request.Body)
 		if err := decoder.Decode(&body); err != nil {
 			http.Error(writer, fmt.Sprintf("Error parsing JSON %s: %s", request.Body, err),
@@ -107,7 +107,7 @@ func handleRequest(writer http.ResponseWriter, request *http.Request,
 			return
 		}
 
-		response, err := web.HandleBody(body, model)
+		response, err := handlers.HandleBody(body, model)
 		if err != nil {
 			http.Error(writer, fmt.Sprintf("Error from HandleBody: %s", err),
 				http.StatusBadRequest)
