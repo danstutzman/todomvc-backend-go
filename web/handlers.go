@@ -1,13 +1,18 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/danielstutzman/todomvc-backend-go/model"
 	"log"
-	"net/http"
 	"strconv"
 )
+
+type Body struct {
+	// ResetModel is for testing purposes
+	ResetModel    bool                 `json:"resetModel"`
+	DeviceUid     string               `json:"deviceUid"`
+	ActionsToSync []model.ActionToSync `json:"actionsToSync"`
+}
 
 type Response struct {
 	DeviceId               int            `json:"deviceId"`
@@ -23,50 +28,7 @@ func mapIntIntToMapStringInt(input map[int]int) map[string]int {
 	return output
 }
 
-func handleRequest(writer http.ResponseWriter, request *http.Request,
-	model model.Model) {
-	// Set Access-Control-Allow-Origin for all requests
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-
-	switch request.Method {
-	case "GET":
-		writer.Write([]byte("This API expects POST requests"))
-	case "OPTIONS":
-		writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		writer.Write([]byte("OK"))
-	case "POST":
-		var body Body
-		decoder := json.NewDecoder(request.Body)
-		if err := decoder.Decode(&body); err != nil {
-			http.Error(writer, fmt.Sprintf("Error parsing JSON %s: %s", request.Body, err),
-				http.StatusBadRequest)
-			return
-		}
-
-		response, err := handleBody(body, model)
-		if err != nil {
-			http.Error(writer, fmt.Sprintf("Error from handleBody: %s", err),
-				http.StatusBadRequest)
-			return
-		}
-
-		responseBytes, err := json.Marshal(response)
-		if err != nil {
-			http.Error(writer, fmt.Sprintf("Error marshaling JSON %v: %s", response, err),
-				http.StatusInternalServerError)
-			return
-		}
-
-		writer.Header().Set("Content-Type", "application/json")
-		writer.Write(responseBytes)
-	default:
-		http.Error(writer, fmt.Sprintf("HTTP method not allowed"),
-			http.StatusMethodNotAllowed)
-		return
-	}
-}
-
-func handleBody(body Body, model model.Model) (*Response, error) {
+func HandleBody(body Body, model model.Model) (*Response, error) {
 	log.Printf("-- Got body %v", body)
 
 	if body.ResetModel {

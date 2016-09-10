@@ -5,17 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/danielstutzman/todomvc-backend-go/model"
-	"github.com/danielstutzman/todomvc-backend-go/web"
 	"log"
 	"os"
 )
-
-type Body struct {
-	// ResetModel is for testing purposes
-	ResetModel    bool                 `json:"resetModel"`
-	DeviceUid     string               `json:"deviceUid"`
-	ActionsToSync []model.ActionToSync `json:"actionsToSync"`
-}
 
 type CommandLineArgs struct {
 	postgresCredentialsPath string
@@ -67,8 +59,8 @@ func main() {
 	}
 
 	if args.socketPath != "" {
-		web.MustRunSocketServer(args.socketPath, model_)
+		mustRunSocketServer(args.socketPath, model_)
 	} else {
-		web.MustRunWebServer(model_)
+		mustRunWebServer(model_)
 	}
 }
