@@ -25,7 +25,7 @@ start-local-gitlab-runner:
 
 coverage:
 	echo "mode: count" > .coverage-all.out
-	for PACKAGE in . ./model ./web; do \
+	set -e; for PACKAGE in . ./model ./web; do \
 		echo > .coverage.out; \
 		go test -coverprofile=.coverage.out -covermode=count $$PACKAGE; \
 		tail -n +2 .coverage.out >> .coverage-all.out; \
