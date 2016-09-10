@@ -10,11 +10,10 @@ func pointToBool(b bool) *bool       { return &b }
 
 func TestCreateTodo(t *testing.T) {
 	model := NewMemoryModel()
-	type NewTodoSpec struct {
+	spec := struct {
 		Title     string
 		Completed bool
-	}
-	spec := NewTodoSpec{"t", true}
+	}{"t", true}
 	newTodo := model.CreateTodo(ActionToSync{
 		Title:     &spec.Title,
 		Completed: &spec.Completed,
