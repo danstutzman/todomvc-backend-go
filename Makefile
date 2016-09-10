@@ -24,14 +24,16 @@ start-local-gitlab-runner:
 		'
 
 coverage:
-	echo "mode: count" > .coverage-all.out
 	set -e; for PACKAGE in . ./model ./web; do \
-		echo > .coverage.out; \
-		go test -coverprofile=.coverage.out -covermode=count $$PACKAGE; \
-		tail -n +2 .coverage.out >> .coverage-all.out; \
+		rm -f $$PACKAGE.coverage.out; \
+		touch $$PACKAGE.coverage.out; \
+		go test -coverprofile=$$PACKAGE.coverage.out $$PACKAGE -coverpkg .,./model,./web; \
 	done
-	rm .coverage.out
-	cat .coverage-all.out | awk -F' ' '{ all_lines += $$2; covered_lines += $$3 } END { print 100 * covered_lines / all_lines, "% covered" }'
+	echo "mode: set" > .coverage-all.out
+	cat ..coverage.out *.coverage.out | grep -v mode: | sort -r \
+		| awk '{if($$1 != last) {print $$0;last=$$1}}' >> .coverage-all.out
+	rm ..coverage.out *.coverage.out
+	cat .coverage-all.out | awk -F' ' '{ all_lines += $$2; if ($$3) { covered_lines += $$2 } } END { print 100 * covered_lines / all_lines, "% covered" }'
 
 coverage-html: coverage
 	go tool cover -html=.coverage-all.out
