@@ -1,4 +1,4 @@
-.PHONY: start-local-gitlab start-local-gitlab-runner coverage coverage-html
+.PHONY: start-local-gitlab start-local-gitlab-runner coverage coverage-html vet
 
 start-local-gitlab:
 	gcloud compute firewall-rules create allow-http-for-http-tag --allow tcp:80 --target-tags http || true
@@ -37,3 +37,6 @@ coverage:
 
 coverage-html: coverage
 	go tool cover -html=.coverage-all.out
+
+vet:
+	cd $$GOPATH/src/github.com/danielstutzman/todomvc-backend-go && go vet . ./handlers ./models
