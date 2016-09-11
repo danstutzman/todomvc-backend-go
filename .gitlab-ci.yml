@@ -15,7 +15,5 @@ build:
     - rm -rf $GOPATH/src/github.com/danielstutzman/todomvc-backend-go
     - cp -R $PWD $GOPATH/src/github.com/danielstutzman
     - cd $GOPATH/src/github.com/danielstutzman/todomvc-backend-go
-    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go build
-    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go vet
-    - GOROOT=$GOROOT GOPATH=$GOPATH $GOROOT/bin/go test ./web
+    - PATH=$PATH:$GOROOT/bin GOROOT=$GOROOT GOPATH=$GOPATH make vet
     - PATH=$PATH:$GOROOT/bin GOROOT=$GOROOT GOPATH=$GOPATH make coverage
